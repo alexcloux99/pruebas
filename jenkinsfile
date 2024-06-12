@@ -1,0 +1,54 @@
+pipeline {
+    agent {
+        label "$SLAVE"
+    }
+    environment {
+        TOOL2 = tool name: 'python', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
+        TOOL1 = tool name: 'pip3', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
+        CRED_SERVER_CLIENT_ID = credentials("$SERVER_CLIENT_ID")
+        CRED_SERVER_CLIENT_SECRET = credentials("$SERVER_CLIENT_SECRET")
+        SHAREPOINT_CREDENTIALS_ID = "sharepoint-credentials"
+        BUILD = "$BUILD_TIMESTAMP-$JOB_BASE_NAME-$env.BUILD_NUMBER"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM', 
+                    branches: [[name: '*/experimental/docker-env']], 
+                    doGenerateSubmoduleConfigurations: false, 
+                    extensions: [[$class: 'CleanCheckout']], 
+                    submoduleCfg: [], 
+                    userRemoteConfigs: [[url: "http://svc-in-integrationji:glpat-BtRT-pgQphU__zs4SB6o@gitlab-core:80/gitlab/ivromero/loewe-automated-test.git", credentialsId: "jira-service-user"]]
+                ])
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t testing .'
+            }
+        }
+
+        stage('Run Robot Framework Tests') {
+            steps {
+                sh 'docker run --name test-container --rm -v ${WORKSPACE}:/app testing'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker images | grep testing'
+            echo 'Cleaning up Docker images...'
+            sh 'docker rmi testing'
+        }
+        success {
+            echo 'Tests passed successfully!'
+        }
+        failure {
+            echo 'Tests failed.'
+        }
+    }
+}

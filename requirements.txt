@@ -1,0 +1,13 @@
+robotframework==4.1
+robotframework-seleniumlibrary==4.0.0
+robotframework-faker==5.0.0
+robotframework-requests
+robotframework-httplibrary
+robotframework-stringformat
+selenium==3.9.0
+robotframework-pabot==2.5.3
+Office365-REST-Python-Client
+office365
+robotframework-imagecompare
+ChromeDriver
+robotframework-puppeteer-percy
